@@ -30,23 +30,9 @@ else:
 
 def get_process_log(filepath, loglevel=logging.INFO, name=PKGNAME+'.process'):
     "Sets up a file-based logger for process logging and returns its log object."
-    log = logging.getLogger(name)
-    log.setLevel(loglevel)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh = logging.FileHandler(filepath)
-    fh.setFormatter(formatter)
-    fh.setLevel(loglevel)
-    log.addHandler(fh)
-    return log
+    pass
 
 def get_data_log(filepath, name=PKGNAME+'.data'):
     "Sets up a file-based logger for data logging and returns its log object."
-    datalog = logging.getLogger(name)
-    datalog.setLevel(logging.DEBUG)
-    datalog.propagate = False
-    formatter = logging.Formatter('')
-    fh = logging.FileHandler(filepath)
-    fh.setFormatter(formatter)
-    datalog.addHandler(fh)
-    return datalog
+    pass
 

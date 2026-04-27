@@ -249,9 +249,7 @@ class NCBIHealthChecker:
         
         # Sort results with NCBI Main Website first, then alphabetically
         def sort_key(result):
-            if result.name == 'NCBI Main Website':
-                return '0'  # Force to top
-            return result.name
+            pass
         
         return sorted(results, key=sort_key)
 
@@ -259,18 +257,18 @@ class NCBIHealthChecker:
 def print_status_icon(status: str) -> str:
     """Get emoji/icon for status."""
     icons = {
-        'up': '✅',
-        'slow': '🐌',
-        'down': '❌',
-        'error': '⚠️'
+        'up': 'âœ…',
+        'slow': 'ðŸ�Œ',
+        'down': 'â�Œ',
+        'error': 'âš ï¸�'
     }
-    return icons.get(status, '❓')
+    return icons.get(status, 'â�“')
 
 
 def print_results(results: List[ServiceResult], show_details: bool = True):
     """Print results in human-readable format."""
     print("\n" + "="*80)
-    print("🏥 NCBI SERVICE HEALTH CHECK REPORT")
+    print("ðŸ�¥ NCBI SERVICE HEALTH CHECK REPORT")
     print("="*80)
     
     # Summary counts
@@ -278,13 +276,13 @@ def print_results(results: List[ServiceResult], show_details: bool = True):
     for result in results:
         status_counts[result.status] = status_counts.get(result.status, 0) + 1
     
-    print(f"\n📊 SUMMARY: {len(results)} services checked")
+    print(f"\nðŸ“Š SUMMARY: {len(results)} services checked")
     for status, count in sorted(status_counts.items()):
         icon = print_status_icon(status)
         print(f"   {icon} {status.upper()}: {count}")
     
     # Detailed results
-    print(f"\n📋 DETAILED RESULTS:")
+    print(f"\nðŸ“‹ DETAILED RESULTS:")
     print("-" * 80)
     
     for result in results:
@@ -312,14 +310,14 @@ def print_results(results: List[ServiceResult], show_details: bool = True):
                        for r in results)
     
     if critical_down:
-        print("🚨 CRITICAL: Core PubMed services are down. Tests will likely fail.")
+        print("ðŸš¨ CRITICAL: Core PubMed services are down. Tests will likely fail.")
         print("   Consider using FORCE_NETWORK_TESTS=1 only if you need to debug specific issues.")
     elif any(r.status == 'down' for r in results):
-        print("⚠️  WARNING: Some services are down, but core functionality may still work.")
+        print("âš ï¸�  WARNING: Some services are down, but core functionality may still work.")
     elif any(r.status == 'slow' for r in results):
-        print("🐌 NOTICE: Some services are responding slowly. Tests may take longer.")
+        print("ðŸ�Œ NOTICE: Some services are responding slowly. Tests may take longer.")
     else:
-        print("✅ ALL GOOD: All services are responding normally.")
+        print("âœ… ALL GOOD: All services are responding normally.")
     
     print("\n" + "="*80)
 
@@ -363,7 +361,7 @@ Examples:
     args = parser.parse_args()
     
     if not args.json:
-        print("🔍 Checking NCBI service health...")
+        print("ðŸ”� Checking NCBI service health...")
         if args.quick:
             print("   (Quick mode: essential services only)")
     

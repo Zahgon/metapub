@@ -175,7 +175,4 @@ PUBLISHER_CONFIGS = {}  # Will be populated dynamically from YAML
 
 def extract_journal_info_legacy(publisher_name: str) -> List[Tuple[str, Dict]]:
     """Legacy interface for journal extraction."""
-    configs = get_yaml_configs()
-    if publisher_name in configs:
-        return extract_journal_info(configs[publisher_name])
-    return []
+    pass

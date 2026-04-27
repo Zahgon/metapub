@@ -271,7 +271,7 @@ _detector = NCBIErrorDetector()
 
 def check_ncbi_status(url: str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi") -> ServiceStatus:
     """Quick function to check NCBI service status."""
-    return _detector.check_service_status(url)
+    pass
 
 
 def diagnose_ncbi_error(exception: Exception, url: str = None) -> Dict[str, Any]:
@@ -281,31 +281,7 @@ def diagnose_ncbi_error(exception: Exception, url: str = None) -> Dict[str, Any]
 
 def format_user_error(exception: Exception, url: str = None) -> str:
     """Format a user-friendly error message with suggestions."""
-    diagnosis = diagnose_ncbi_error(exception, url)
-
-    if diagnosis['is_service_issue']:
-        message = f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                            NCBI SERVICE ISSUE                               ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                              ║
-║  {diagnosis['user_message']:<76} ║
-║                                                                              ║
-║  Suggested actions:                                                          ║"""
-
-        for action in diagnosis['suggested_actions']:
-            message += f"\n║  • {action:<74} ║"
-
-        message += """
-║                                                                              ║
-║  This is likely a temporary issue with NCBI's servers, not your code.       ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝"""
-
-        return message
-    else:
-        return f"Error: {diagnosis['user_message']}\n\nSuggested actions:\n" + \
-               "\n".join(f"• {action}" for action in diagnosis['suggested_actions'])
+    pass
 
 
 class NCBIServiceError(Exception):
@@ -320,25 +296,7 @@ class NCBIServiceError(Exception):
 
     def _format_message(self):
         """Format a user-friendly error message with suggestions."""
-        message = f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                            NCBI SERVICE ISSUE                                ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                              ║
-║  {self.user_message:<76}║
-║                                                                              ║
-║  Suggested actions:                                                          ║"""
-
-        for action in self.suggestions:
-            message += f"\n║ • {action:<74} ║"
-
-        message += """
-║                                                                              ║
-║  This is likely a temporary issue with NCBI's servers, not your code.        ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝"""
-
-        return message
+        pass
 
     def __str__(self):
         return self._formatted_message
@@ -347,26 +305,6 @@ class NCBIServiceError(Exception):
 def handle_ncbi_request_error(func):
     """Decorator to wrap NCBI API calls with intelligent error handling."""
     def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            # Try to extract URL from function arguments for better diagnosis
-            url = None
-            if args and hasattr(args[0], 'url'):
-                url = args[0].url
-            elif 'url' in kwargs:
-                url = kwargs['url']
-
-            diagnosis = diagnose_ncbi_error(e, url)
-
-            if diagnosis['is_service_issue']:
-                raise NCBIServiceError(
-                    diagnosis['user_message'],
-                    diagnosis['error_type'],
-                    diagnosis['suggested_actions']
-                ) from e
-            else:
-                # Re-raise original exception if it's not a service issue
-                raise
+        pass
 
     return wrapper

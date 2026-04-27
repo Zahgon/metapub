@@ -59,10 +59,7 @@ re_pnas_supplement = re.compile(r'.*?pnas.org\/content\/suppl\/(?P<year>\d+)\/(?
 DXDOI_INSTANCE = None
 
 def DXDOI():
-    global DXDOI_INSTANCE
-    if not DXDOI_INSTANCE:
-        DXDOI_INSTANCE = DxDOI()
-    return DXDOI_INSTANCE
+    pass
 
 
 def get_journal_name_from_url(url):
@@ -86,12 +83,7 @@ def get_pnas_doi_from_link(url):
     :param url: (str)
     :return: doi (str) or None
     """
-    out = '10.1073/pnas.'
-    match = re_pnas_supplement.match(url)
-    if match:
-        doi_suffix = match.groupdict()['ident'].split('.')[0]
-        return out + doi_suffix
-    return None
+    pass
 
 
 def get_elifesciences_doi_from_link(url):
@@ -106,20 +98,7 @@ def get_elifesciences_doi_from_link(url):
     :param url: (str)
     :return: doi (str) or None
     """
-    if 'elifesciences.org' not in url:
-        return None
-
-    out = '10.7554/eLife.'
-    patterns = [re_elifesciences,
-                re_elifesciences_figures]
-
-    for pattern in patterns:
-        match = pattern.match(url)
-        if match:
-            doi_suffix = match.groupdict()['ident']
-            return out + doi_suffix
-
-    return None
+    pass
 
 
 def get_bmj_doi_from_link(url):
@@ -142,34 +121,7 @@ def get_bmj_doi_from_link(url):
     :param url: (str)
     :return: doi (str) or None
     """
-    
-    if 'bmj.com' not in url:
-        return None
-
-    out = '10.1136/'
-    doi = None
-
-    BMJ_VIP_TO_DOI_DOMAINS = ['jmg']
-    match = re_bmj_vip_to_doi.match(url)
-    if match:
-        parts = match.groupdict()
-        if parts['subdomain'] in BMJ_VIP_TO_DOI_DOMAINS:
-            doi = out + '{subdomain}.{volume}.{issue}.{first_page}'.format(**parts)
-
-    else:
-        match = re_bmj.match(url)
-        if match:
-            parts = match.groupdict()
-            doi = out + parts['doi_suffix']
-
-    # gotta test that doi. it might be a dud.
-    if doi:
-        try:
-            DXDOI().resolve(doi)
-            return doi
-        except (BadDOI, DxDOIError):
-            return None
-    return None
+    pass
 
 
 def get_spandidos_doi_from_link(url):
@@ -184,11 +136,7 @@ def get_spandidos_doi_from_link(url):
     :param url: (str)
     :return: doi (str) or None
     """
-    if 'spandidos-publications.com' not in url:
-        return None
-
-    url = url.replace('download', 'abstract')
-    return scrape_doi_from_article_page(url)
+    pass
 
 
 def get_karger_doi_from_link(url):
@@ -203,14 +151,7 @@ def get_karger_doi_from_link(url):
     :param url: (str)
     :return: doi (str) or None
     """
-    out = '10.1159/'
-    match = re_karger.match(url)
-    if match:
-        kid = match.groupdict()['kid']
-        num_zeroes_needed = 9 - len(kid)
-        return out + '0'*num_zeroes_needed + kid
-    else:
-        return None
+    pass
 
 
 def get_jstage_doi_from_link(url):
@@ -221,11 +162,7 @@ def get_jstage_doi_from_link(url):
     :param url: (str)
     :return: doi or None
     """
-    match = re_jstage.match(url)
-    if match:
-        if url.find('_pdf') > -1:
-            url = url.replace('_pdf', '_article')
-        return scrape_doi_from_article_page(url)
+    pass
 
 
 def get_sciencedirect_doi_from_link(url):
@@ -242,29 +179,7 @@ def get_sciencedirect_doi_from_link(url):
     :param url: (str)
     :return: doi or None
     """
-    if 'sciencedirect.com' not in url:
-        return None
-
-    out = '10.1016/'
-
-    try:
-        pii = re_sciencedirect_pii_simple.match(url).groupdict()['pii']
-        pii = OFFICIAL_PII_FORMAT.format(pt1=pii[:5], pt2=pii[5:9], pt3=pii[9:11], pt4=pii[11:16], pt5=pii[16])
-    except AttributeError:
-        try:
-            pii = re_sciencedirect_pii_official.match(url).groupdict()['pii']
-        except AttributeError:
-            return None
-    doi = out + pii
-    try:
-        DXDOI().resolve(doi)
-        return doi
-    except DxDOIError:
-        # some
-        pass
-
-    # use URL scrape
-    return scrape_doi_from_article_page('http://www.sciencedirect.com/science/article/pii/%s' % pii)
+    pass
 
 
 def get_cell_doi_from_link(url):
@@ -289,42 +204,7 @@ def get_cell_doi_from_link(url):
     :param url: (str)
     :return: doi or None
     """
-    if 'cell.com' not in url:
-        return None
-
-    out = '10.1016/'
-    pii = ''
-
-    # Try "official" pii format first
-    match = re_cell_pii_official.match(url)
-    if match:
-        pii = match.groupdict()['pii']
-
-    else:
-        # Try "simple" (no punctuation) pii formats.
-        match = re_cell_pii_simple.match(url)
-        if match:
-            pii = match.groupdict()['pii']
-            pii = OFFICIAL_PII_FORMAT.format(pt1=pii[:5], pt2=pii[5:9], pt3=pii[9:11], pt4=pii[11:16], pt5=pii[16])
-
-        else:
-            # Try "old style" (has no "S" in front).
-            match = re_cell_old_style.match(url)
-            if match:
-                pii = match.groupdict()['pii']
-                pii = OFFICIAL_PII_FORMAT.format(pt1=pii[:4], pt2=pii[4:8], pt3=pii[8:10], pt4=pii[10:15], pt5=pii[15])
-
-    if match:
-        journal_abbrev = match.groupdict().get('journal_abbrev', None)
-        if journal_abbrev and journal_abbrev in ['cancer-cell', 'current-biology', 'cell-reports', 'ajhg']:
-            url = url.replace('pdfExtended', 'abstract')
-            url = url.replace('/pdf/', '/abstract/')
-            url = url.replace('.pdf', '')
-            return scrape_doi_from_article_page(url)
-
-        return out + pii
-
-    return None
+    pass
 
 
 # TODO: nature function needs improvement (Older articles, mostly).
@@ -346,79 +226,7 @@ def get_nature_doi_from_link(link):
     :param link: the URL
     :return: a string containing a DOI, if one was resolved, or None
     """
-    # TODO: check validity of DOI before returning.
-    # Some older articles need to have their pages loaded and doi scraped.
-    # example: http://www.nature.com/pr/journal/v49/n1/full/pr20018a.html --> 10.1203/00006450-200101000-00008
-
-    if 'nature.com' not in link:
-        return None
-
-    # this is a non-comprehensive list of nature journals
-    style1journals = ['gimo', 'nature', 'nbt', 'ncb', 'nchembio', 'ncomms', 'ng', 'nm', 'nn',
-                      'nrc', 'nrm', 'nsmb', 'srep']
-
-    # example: link:http://www.nature.com/modpathol/journal/vaop/ncurrent/extref/modpathol2014160x3.xlsx
-    #          doi:10.1038/modpathol.2014.160
-    style2journals = ['aps', 'bjc', 'cddis', 'cr', 'ejhg', 'gim', 'jcbfm', 'jhg', 'jid', 'labinvest', 'leu',
-                      'modpathol', 'mp', 'onc', 'oncsis', 'pr']
-
-
-    match = re.search(r'nature.com/[a-zA-z]+/', link)
-
-    if match:
-        try:
-            journal_abbrev = match.group(0).split('/')[1]
-        except:
-            print('Warning: Unable to extract journal abbrev from link {}'.format(link))
-            journal_abbrev = None
-
-    # Example: http://www.nature.com/neuro/journal/v13/n11/abs/nn.2662.html
-    if journal_abbrev == 'neuro':
-        journal_abbrev = 'nn'
-
-    match = re.search(r'%s\.{0,1}\d+' % journal_abbrev, link)
-    if match:
-        doi_suffix = match.group(0)
-        if doi_suffix.endswith('.'):  # strip off a trailing period
-            doi_suffix = doi_suffix[:-1]
-
-        # the DOI suffix can be taken directly for these journals
-        if journal_abbrev in style1journals:
-            return '10.1038/{}'.format(doi_suffix)
-
-        # style2journals are the default
-        else:
-            year = doi_suffix[len(journal_abbrev):len(journal_abbrev)+4]
-            num = doi_suffix[len(journal_abbrev)+4:]
-            return '10.1038/{}.{}.{}'.format(journal_abbrev, year, num)
-
-    # http://www.nature.com/articles/cr2009141 :
-    # http://www.nature.com/articles/cddis201475
-    # http://www.nature.com/articles/nature03404
-    # http://www.nature.com/articles/ng.2223
-    # http://www.nature.com/articles/nsmb.2666
-    match = re.search(r'articles/(([a-z]+)\.{0,1}(\d+))', link)
-    if match:
-        full_match = match.group(0)
-        suffix = match.group(1)
-        journal_abbrev = match.group(2)
-        num = match.group(3)
-        if journal_abbrev in style1journals:
-            return '10.1038/{}'.format(suffix)
-        else:
-            return '10.1038/{}.{}.{}'.format(journal_abbrev, num[:4], num[4:])
-
-    # http://www.nature.com/leu/journal/v19/n11/abs/2403943a.html : 10.1038/sj.leu.2403943
-    # http://www.nature.com/onc/journal/v26/n57/full/1210594a.html :  doi:10.1038/sj.onc.1210594
-    match = re.search(r'full/\d+|abs/\d+', link)
-    if match:
-        num = match.group(0).split('/')[1]
-        return '10.1038/sj.{}.{}'.format(journal_abbrev, num)
-
-    # nothing? try scraping the page.
-
-    link = link.replace('.pdf', '.html')
-    return scrape_doi_from_article_page(link)
+    pass
 
 
 def get_biomedcentral_doi_from_link(link):
@@ -427,54 +235,7 @@ def get_biomedcentral_doi_from_link(link):
     :param link: (str) the URL
     :return: doi (str) or None
     """
-    # style 1:
-    # http://www.biomedcentral.com/content/pdf/bcr1282.pdf : doi:10.1186/bcr1282
-    # http://www.biomedcentral.com/content/pdf/1465-9921-12-49.pdf : doi:10.1186/1465-9921-12-49
-    # http://www.biomedcentral.com/content/pdf/1471-2164-16-S1-S3.pdf : doi:10.1186/1471-2164-16-S1-S3
-    # http://www.biomedcentral.com/content/pdf/1753-6561-4-s2-o22.pdf : doi:10.1186/1753-6561-4-S2-O22
-    # http://genomebiology.com/content/pdf/gb-2013-14-10-r108.pdf : doi:10.1186/gb-2013-14-10-r108
-    # for supplementary, must remove the last 'S' part
-    # http://www.biomedcentral.com/content/supplementary/bcr1865-S3.doc : doi:10.1186/bcr1865
-    # http://www.biomedcentral.com/content/supplementary/bcr3584-S1.pdf : doi:10.1186/bcr3584
-    # http://www.biomedcentral.com/content/supplementary/1471-2105-11-300-S1.PDF : doi:10.1186/1471-2105-11-300
-    # http://www.biomedcentral.com/content/supplementary/1471-2164-12-343-S3.XLS : doi:10.1186/1471-2164-12-343
-    # http://www.biomedcentral.com/content/supplementary/1471-2164-14-S3-S7-S1.xlsx : doi:10.1186/1471-2164-14-S3-S7
-    # http://www.biomedcentral.com/content/supplementary/gb-2013-14-10-r108-S8.xlsx : doi:10.1186/gb-2013-14-10-r108
-    # style 2:
-    # http://www.biomedcentral.com/1471-2148/12/114 : doi:10.1186/1471-2164-12-114
-    # http://www.biomedcentral.com/1471-2164/15/707/table/T2 : doi:10.1186/1471-2164-15-707
-    # http://www.biomedcentral.com/1471-2164/14/S1/S11 doi:10.1186/1471-2164-14-S1-S11
-    # http://www.biomedcentral.com/1471-230X/11/31 doi:10.1186/1471-230X-11-31
-
-    if 'biomedcentral.com' not in link:
-        return None
-
-    # first, try to use the filename
-    if '/content/' in link:
-        filename = link.split('/')[-1]
-        if '.' in filename:
-            base = filename.split('.')[0]
-            if '/pdf/' in link:
-                return '10.1186/' + base
-            elif '/supplementary/' in link:
-                i1 = base.rfind('S')
-                i2 = base.rfind('s')
-                i = max(i1, i2)
-                return '10.1186/' + base[:i-1]
-    else:
-        parse_result = urlparse(link)
-        path = parse_result.path
-        keywords = ['abstract', 'figure', 'table']
-        for kw in keywords:
-            if kw in path:
-                i = path.find(kw)
-                path = path[:i-1]
-                break
-        if path[-1] == '/':
-            path = path[:-1]
-        if path[0] == '/':
-            path = path[1:]
-        return '10.1186/' + path.replace('/', '-')
+    pass
 
 
 def get_jci_doi_from_link(url):
@@ -488,12 +249,7 @@ def get_jci_doi_from_link(url):
     :param url: (str)
     :return: doi or None
     """
-    out = '10.1172/JCI'
-    match = re_jci.match(url)
-    if match:
-        return out + match.groupdict()['jci_id']
-    else:
-        return None
+    pass
 
 
 def get_ahajournals_doi_from_link(url):
@@ -508,16 +264,7 @@ def get_ahajournals_doi_from_link(url):
     :param url: (str)
     :return: doi or None
     """
-    if 'ahajournals.org' not in url:
-        return None
-
-    out = '10.1161/'
-    match = re_ahajournals.match(url)
-    if match:
-        return out + match.groupdict()['doi_suffix']
-
-    url = url.replace('.pdf', '')
-    return scrape_doi_from_article_page(url)
+    pass
 
 
 def get_early_release_doi_from_link(url):
@@ -532,25 +279,7 @@ def get_early_release_doi_from_link(url):
     :param url: (str)
     :return: doi or None
     """
-
-    match = re_early_release.match(url)
-    if match:
-        resd = match.groupdict()
-        hostname = hostname_of(resd['hostname'])
-        root_domain = rootdomain_of(hostname)
-
-        # special treatment for oxfordjournals.org
-        if root_domain in 'oxfordjournals.org':
-            doi_pt1, doi_pt2 = resd['doi_suffix'].split('.', 2)
-            doi_suffix = '%s/%s' % (doi_pt1, doi_pt2)
-            return HOSTNAME_TO_DOI_PREFIX_MAP['*.oxfordjournals.org'] + '/' + doi_suffix
-
-        if hostname in HOSTNAME_TO_DOI_PREFIX_MAP.keys():
-            return HOSTNAME_TO_DOI_PREFIX_MAP[hostname] + '/' + resd['doi_suffix']
-
-        elif '*.%s' % root_domain in HOSTNAME_TO_DOI_PREFIX_MAP.keys():
-            # create a "wildcard" subdomain lookup in case that's an option in the hostname-doi map.
-            return HOSTNAME_TO_DOI_PREFIX_MAP['*.%s' % root_domain] + '/' + resd['doi_suffix']
+    pass
 
 
 def get_generic_doi_from_link(url):
@@ -564,20 +293,7 @@ def get_generic_doi_from_link(url):
     :param url: (str)
     :return: doi or None
     """
-    doi = find_doi_in_string(url)
-    if doi:
-        # remove common addenda that may have come from the regular expression.
-        for addendum in ['/full', '/asset', '/pdf', '.pdf']:
-            place = doi.find(addendum)
-            if place > -1:
-               doi = doi[:place]
-
-    # we had better check ourselves before we wreck ourselves.
-    try:
-        DXDOI().resolve(doi)
-        return doi
-    except (BadDOI, DxDOIError):
-        return None
+    pass
 
 
 def get_plos_doi_from_link(url):
@@ -601,17 +317,7 @@ def get_plos_doi_from_link(url):
     :param url: (str)
     :return: doi (str) or None
     """
-    if 'plos.org' not in url:
-        return None
-
-    doi = find_doi_in_string(url)
-    if doi:
-        if '#' in doi:
-            doi = doi[:doi.find('#')]
-
-        parts = doi.split('.')
-        return '.'.join(parts[:4])
-    return None
+    pass
 
 
 # == DOI search method registry... order matters! don't screw around with it unless you know what you're doing. :) == #

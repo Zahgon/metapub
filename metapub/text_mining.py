@@ -47,14 +47,12 @@ def findall_pmcIDs(text):
     :param text:
     :returns pmc_ids: list of IDs (possibly empty)
     """
-    return re_pmcID.findall(text)
+    pass
 
 
 def is_pmcid(pmcid):
     """ Returns boolean on whether supplied pmcid looks like a PubMedCentral ID (e.g. "PMC31345"). """
-    if pmcid in findall_pmcIDs(pmcid):
-        return True
-    return False
+    pass
 
 
 def pick_pmid(text):
@@ -64,15 +62,7 @@ def pick_pmid(text):
     :param text: (str)
     :return: pmid (str) or None
     """
-    pmids = re_pmid.findall(text)
-    if pmids:
-        longest = ''
-        for num in pmids:
-            if len(num) > len(longest):
-                longest = num
-        return longest
-    else:
-        return None
+    pass
 
 
 def _doi_pass_2(doi):
@@ -157,6 +147,5 @@ def scrape_doi_from_article_page(url):
 
 # NOT TESTED and probably not working #####
 def get_pmc_fulltext_filename_for_PubMedArticle(pma):
-    fmt = '{journal}/{journal}_{year}_{month}_{day}_{voliss}_{pages}'
-    return fmt.format(**pma.to_dict())
+    pass
 

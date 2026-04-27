@@ -81,11 +81,7 @@ def get_article_info_from_url(url):
 
 
 def _get_urlreverse_cache(cachedir=DEFAULT_CACHE_DIR):
-    global URLREVERSE_CACHE
-    if not URLREVERSE_CACHE:
-        _cache_path = get_cache_path(cachedir, CACHE_FILENAME)
-        URLREVERSE_CACHE = SQLiteCache(_cache_path)
-    return URLREVERSE_CACHE
+    pass
 
 
 class UrlReverse(object):
@@ -183,60 +179,7 @@ class UrlReverse(object):
             self.doi
             self.steps
         """
-        self.info = get_article_info_from_url(self.url)
-        self.format = self.info['format']
-
-        if self.format == 'pmid':
-            self.pmid = self.info['pmid']
-            #self.doi = pmid2doi(self.pmid)
-            if self.pmid:
-                self.steps.append('FOUND PMID from inferred PMID in URL')
-
-        elif self.format == 'doi':
-            self.doi = self.info['doi']
-            self.steps.append('FOUND DOI via inferred doi')
-            self.pmid = doi2pmid(self.doi)
-            if self.pmid:
-                try:
-                    int(self.pmid)
-                    self.steps.append('FOUND PMID via doi2pmid')
-                except:
-                    # we'll log this further down (avoiding repeated code).
-                    pass
-            else:
-                self.steps.append('NO PMID from doi2pmid')
-
-        elif self.format == 'vip':
-            try:
-                self._try_citation_methods()
-            except MetaPubError as error:
-                self.pmid = None
-                self.steps.append('NO PMID from VIP info + citation methods')
-
-        elif self.format == 'pmcid':
-            self.pmid = get_pmid_for_otherid(self.info['pmcid'])
-            self.doi = doi2pmid(self.pmid)
-            if self.pmid:
-                self.steps.append('FOUND PMID from PMCID -> PMID lookup')
-
-        if self.pmid and self.pmid.startswith('NOT_FOUND'):
-            self.steps.append('NO PMID: PMID citation lookup resulted in "%s"' % self.pmid)
-            self.pmid = None
-
-        if self.doi and not self.pmid:
-            self._try_backup_doi2pmid_methods()
-
-        if self.doi:
-            try:
-                urlres = dxdoi.resolve(self.doi)
-                self.steps.append('VERIFY dx.doi.org: %s' % urlres)
-            except (DxDOIError, BadDOI) as error:
-                self.doi = None
-                self.steps.append('VERIFY dx.doi.org: PROBLEM with DOI: %r' % error)
-
-        # Finally: ADMIT DEFEAT
-        if not self.doi and not self.pmid:
-            self.steps.append('NO DOI. NO PMID. All methods failed. END OF LINE.')
+        pass
 
     def _store_cache(self):
         """ Store this object in cache by explicitly choosing variables to store as
@@ -247,27 +190,10 @@ class UrlReverse(object):
         There is no return from this function. Exceptions from the SQLiteCache 
         object may be raised.
         """
-        cache_value = self.to_dict()
-        cache_value['timestamp'] = time.time()
-        self._cache[self._make_cache_key(self.url)] = cache_value
+        pass
 
     def _load_from_cache(self, retry=False, expiry_date=None):
-        cache_result = self._query_cache(self.url, expiry_date)
-
-        if cache_result:
-            self.pmid = cache_result['pmid']
-            self.doi = cache_result['doi']
-            self.steps = cache_result['steps']
-            self.info = cache_result['info']
-
-            if retry:
-                if 'END OF LINE' in ';'.join(self.steps):
-                    self._urlreverse()
-                    self._store_cache()
-
-        else:
-            self._urlreverse()
-            self._store_cache()
+        pass
 
     def _make_cache_key(self, url):
         """ Returns url normalized via str() function for hash lookup / store. """
@@ -317,15 +243,7 @@ class UrlReverse(object):
 
     def _try_citation_methods(self):
         # 1) try pubmed citation match to get a PMID.
-        pmids = pm_fetch.pmids_for_citation(**self.info)
-        pmid = interpret_pmids_for_citation_results(pmids)
-        if pmid and pmid != 'AMBIGUOUS':
-            self.pmid = pmid
-            self.doi = pmid2doi(pmid)
-            self.steps.append('FOUND PMID via PubmedFetcher.pmids_for_citation')
-            if self.doi:
-                self.steps.append('FOUND DOI via pmid2doi')
-            return
+        pass
 
         # 2) try CrossRef -- most effective when title available, but may work without it.
         #       Get a DOI and then backref to PMID.
@@ -335,107 +253,11 @@ class UrlReverse(object):
         unambiguous PMID result. Mutates self.pmid (if found unambigously) and self.steps
         (appending strings documenting the process by which PMID was(n't) acquired).
         """
-
-        # All hinges on whether CrossRef can give us a good result. If not, fail out early.
-        work = cr_fetch.article_by_doi(self.doi)
-
-        if not work:
-            self.steps.append('No results in CrossRef searching by DOI. Quitting here.')
-            return None
-    
-        # bowlderize the title (remove urlencoded chars, unicode-only chars, and punctuation).
-        # ps. some entries have no title (really!)
-
-        title = remove_chars(work.title[0].strip())
-        if title.strip() == '':
-            self.steps.append('CrossRef result has no title. This bodes not well. Continuing anyway.')
-
-        pmids = []
-
-        if title:
-            # try just searching Pubmed by title first. If we get one single result, that should be it.
-            pmids = pm_fetch.pmids_for_query(title)
-
-            if len(pmids) == 1:
-                self.pmid = pmids[0]
-                self.steps.append('FOUND PMID via Pubmed Advanced Query')
-                return
-
-            elif len(pmids) == 0:
-                self.pmid = None
-                self.steps.append('Zero results for title "%s" in Pubmed, attempting coordinate match' % title)
-                title = ''
-
-            elif len(pmids) > 1 and len(title.split(' ')) < 3:
-                # title could be something like "Abstract" or "Pituitary" or "Endocrinology Yearbook" -- too vague.
-                self.steps.append('Title "%s" too VAGUE, attempting coordinate match' % title)
-                title = ''
-
-        # we have ambiguous results (or no title at all) -- let's try to narrow the field based on
-        # whether we have a viable title or not.
-
-        # Two paths diverged in a wood, and I...
-
-        if title=='':
-            # strict coordinates
-            params = {'VI': work.volume,
-                      'IP': work.issue,
-                      'AU': work.author1_last_fm,
-                      'PG': work.first_page,
-                      'DP': work.pubyear,
-                     }
-            try:
-                pmids = pm_fetch.pmids_for_query(work.to_citation()['journal'], **params)
-            except KeyError:
-                # hrm, no title and no jtitle, eh... let's bail.
-                self.steps.append('NO PMID. CrossRef data unworkable (no jtitle). END OF LINE.')
-                return 
-
-        else:
-            if work.volume and work.issue:
-                self.steps.append('AMBIGUOUS results for title "%s", trying with volume/issue')
-                pmids = pm_fetch.pmids_for_query(title, VI=work.volume, IP=work.issue)
-            elif work.volume and work.author1_last_fm:
-                self.steps.append('AMBIGUOUS results for title "%s", trying with first author')
-                pmids = pm_fetch.pmids_for_query(title, AU=author1_last_fm)
-            elif work.first_page and work.author1_last_fm:
-                self.steps.append('AMBIGUOUS results for title "%s", trying with first_page')
-                pmids = pm_fetch.pmids_for_query(title, PG=work.first_page)
-            elif work.volume:
-                self.steps.append('AMBIGUOUS results for title "%s", trying with volume')
-                pmids = pm_fetch.pmids_for_query(title, VI=work.volume)
-
-        # that should have narrowed the field substantially. we should give up if it's still ambiguous.
-        if len(pmids) == 1:
-            self.pmid = pmids[0]
-            self.steps.append('FOUND PMID via Pubmed Advanced Query')
-        elif len(pmids) == 0:
-            self.pmid = None
-            self.steps.append('NO PMID, zero results from pubmed advanced query. (Data from CrossRef was: %r)' % (work))
-        else:
-            self.pmid = None
-            self.steps.append('NO PMID, AMBIGUOUS results from pubmed advanced query (%i possibilities). %s' % (len(pmids), work))
+        pass
 
     def to_dict(self):
         """ Returns a dictionary containing all public object attributes (i.e. not starting with an underscore). 
         Function objects are converted to their names for JSON serialization.
         """
-        outd = {}
-        for key in self.__dict__:
-            if not key.startswith('_'):
-                value = self.__dict__[key]
-                # Handle the info dict which may contain function objects
-                if key == 'info' and isinstance(value, dict):
-                    info_copy = {}
-                    for info_key, info_value in value.items():
-                        if callable(info_value):
-                            info_copy[info_key] = info_value.__name__
-                        else:
-                            info_copy[info_key] = info_value
-                    outd[key] = info_copy
-                elif callable(value):
-                    outd[key] = value.__name__
-                else:
-                    outd[key] = value
-        return outd
+        pass
 

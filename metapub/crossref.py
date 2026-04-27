@@ -80,97 +80,57 @@ class CrossRefWork(object):
     @property
     def first_page(self):
         """Returns first page (number) of article as string, or None if self.page is empty."""
-        if self.page:
-            return self.page.split('-')[0]
-        return None
+        pass
 
     @property
     def citation(self):
         """Returns a formal citation string for this work."""
-        return cite.article(**self.to_citation())
+        pass
 
     @property
     def pubyear(self):
-        if self.issued:
-            return self.issued['date-parts'][0][0]
-        return ''
+        pass
 
     @property
     def pubmonth(self):
-        if self.issued:
-            return self.issued['date-parts'][0][1]
+        pass
 
     @property
     def pubdate(self):
-        if self.issued:
-            return datetime.date(self.issued['date-parts'][0])
+        pass
 
     @staticmethod
     def _format_author_first_last(auth):
         """Format an author dict as 'Firstname Lastname', handling missing fields."""
-        given = auth.get('given', '')
-        family = auth.get('family', '')
-        name = auth.get('name', '')
-        if given and family:
-            return given + ' ' + family
-        if family:
-            return family
-        return name
+        pass
 
     @staticmethod
     def _format_author_last_fm(auth):
         """Format an author dict as 'Lastname F', handling missing fields."""
-        given = auth.get('given', '')
-        family = auth.get('family', '')
-        name = auth.get('name', '')
-        if family and given:
-            return family + ' ' + given[0].upper()
-        if family:
-            return family
-        return name
+        pass
 
     @property
     def author1(self):
-        if not self.author:
-            return ''
-        for auth in self.author:
-            if auth.get('sequence') == 'first':
-                return self._format_author_first_last(auth)
-        return ''
+        pass
 
     @property
     def author1_last_fm(self):
-        if not self.author:
-            return ''
-        for auth in self.author:
-            if auth.get('sequence') == 'first':
-                return self._format_author_last_fm(auth)
-        return ''
+        pass
 
     @property
     def authors_str_lastfirst(self):
         """Returns this work's authors as a semicolon-separated string -- LASTNAME FIRSTInitial."""
-        if not self.author:
-            return ''
-        out = self.author1_last_fm
-        if len(self.author) > 1:
-            for auth in self.author[1:]:
-                out += ';' + self._format_author_last_fm(auth)
-        return out
+        pass
 
     @property
     def author_list(self):
         """Returns this work's authors as a flat list (Firstname Lastname), retaining order given by Crossref."""
-        if not self.author:
-            return []
-        return [self._format_author_first_last(auth) for auth in self.author]
+        pass
 
     @property
     def author_list_last_fm(self):
         """Returns this work's authors as a flat list (Lastname FirstInitial), retaining order given by Crossref."""
-        if not self.author:
-            return []
-        return [self._format_author_last_fm(auth) for auth in self.author]
+        pass
 
     def to_citation(self):
         """Describes this work as a dictionary suitable for citation lookups in PubMed."""
@@ -190,16 +150,7 @@ class CrossRefWork(object):
 
     def to_dict(self):
         "Describes this Work as a dictionary similar to the one returned by CrossRef."
-        outd = self.__dict__.copy()
-        outd['references-count'] = outd.pop('references_count')
-        outd['issn-type'] = outd.pop('issn_type')
-        outd['journal-issue'] = outd.pop('journal_issue')
-        outd['container-title'] = outd.pop('container_title')
-        outd['published-print'] = outd.pop('published_print')
-        outd['is_referenced-by-count'] = outd.pop('is_referenced_by_count')
-        outd['published-online'] = outd.pop('published_online')
-        outd['content-domain'] = outd.pop('content_domain')
-        return outd
+        pass
 
     def __str__(self):
         return """<CrossRefWork {doi} Score: {score}> {aulast}. "{title}" {journal}. {year}. {volume}({issue}):{pages}\n\t""".format(score=self.score, **self.to_citation())
@@ -308,9 +259,5 @@ class CrossRefFetcher(Borg):
         :param title: str
         :rtype: CrossRefWork or None (if no results)
         """
-        res = self.cr.works(query_bibliographic=title, limit=1)
-        if res['message']['total-results'] > 0:
-            item = res['message']['items'][0]
-            return CrossRefWork(**item)
-        return None
+        pass
 

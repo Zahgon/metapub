@@ -37,135 +37,24 @@ class QueryService:
 
     def _is_valid_xml_response(self, content: str) -> bool:
         """Validate that response content is actually XML, not HTML error pages."""
-        if not content or not content.strip():
-            return False
-
-        # Check for obvious HTML markers
-        content_lower = content.lower().strip()
-        if (content_lower.startswith('<!doctype html') or
-            content_lower.startswith('<html') or
-            'down_bethesda' in content_lower):
-            log.warning("Detected HTML error page in response - not caching")
-            return False
-
-        # Try to parse as XML
-        try:
-            if content.strip().startswith('<?xml'):
-                etree.fromstring(content.encode('utf-8'))
-            else:
-                etree.fromstring(content)
-            return True
-        except (etree.XMLSyntaxError, Exception) as e:
-            log.warning(f"Invalid XML response: {e}")
-            return False
+        pass
 
     def efetch(self, params: dict) -> str:
         """Compatibility method for efetch."""
-        try:
-            db = params.get('db')
-            id_param = params.get('id')
-            rettype = params.get('rettype', 'xml')
-            retmode = params.get('retmode', 'text')
-            is_variationid = params.get('is_variationid', None)
-
-            if not db or not id_param:
-                raise EutilsRequestError("Missing required parameters: db and id")
-
-            # NCBIClient handles caching and XML validation
-            efetch_kwargs = dict(
-                db=db,
-                id=id_param,
-                rettype=rettype,
-                retmode=retmode
-            )
-            if is_variationid is not None:
-                efetch_kwargs['is_variationid'] = is_variationid
-            return self.client.efetch(**efetch_kwargs)
-        except Exception as e:
-            if isinstance(e, (MetaPubError, EutilsRequestError)):
-                raise EutilsRequestError(str(e)) from e
-            else:
-                raise EutilsRequestError(f"Request failed: {str(e)}") from e
+        pass
 
     def esearch(self, params: dict) -> str:
         """Compatibility method for esearch."""
-        try:
-            db = params.get('db')
-            term = params.get('term')
-            retmax = params.get('retmax', 20)
-            retstart = params.get('retstart', 0)
-            sort = params.get('sort')
-
-            if not db or not term:
-                raise EutilsRequestError("Missing required parameters: db and term")
-
-            return self.client.esearch(
-                db=db,
-                term=term,
-                retmax=retmax,
-                retstart=retstart,
-                sort=sort
-            )
-        except Exception as e:
-            if isinstance(e, (MetaPubError, EutilsRequestError)):
-                raise EutilsRequestError(str(e)) from e
-            else:
-                raise EutilsRequestError(f"Request failed: {str(e)}") from e
+        pass
 
     def elink(self, params: dict) -> str:
         """Compatibility method for elink."""
-        try:
-            dbfrom = params.get('dbfrom')
-            id_param = params.get('id')
-            db = params.get('db')
-            cmd = params.get('cmd', 'neighbor')
-
-            if not dbfrom or not id_param:
-                raise EutilsRequestError("Missing required parameters: dbfrom and id")
-
-            return self.client.elink(
-                dbfrom=dbfrom,
-                id=id_param,
-                db=db,
-                cmd=cmd
-            )
-        except Exception as e:
-            if isinstance(e, (MetaPubError, EutilsRequestError)):
-                raise EutilsRequestError(str(e)) from e
-            else:
-                raise EutilsRequestError(f"Request failed: {str(e)}") from e
+        pass
 
     def esummary(self, params: dict) -> str:
         """Compatibility method for esummary."""
-        try:
-            db = params.get('db')
-            id_param = params.get('id')
-            retmode = params.get('retmode', 'xml')
-
-            if not db or not id_param:
-                raise EutilsRequestError("Missing required parameters: db and id")
-
-            return self.client.esummary(
-                db=db,
-                id=id_param,
-                retmode=retmode
-            )
-        except Exception as e:
-            if isinstance(e, (MetaPubError, EutilsRequestError)):
-                raise EutilsRequestError(str(e)) from e
-            else:
-                raise EutilsRequestError(f"Request failed: {str(e)}") from e
+        pass
 
     def einfo(self, params: dict = None) -> str:
         """Compatibility method for einfo."""
-        try:
-            if params is None:
-                params = {}
-
-            db = params.get('db')
-            return self.client.einfo(db=db)
-        except Exception as e:
-            if isinstance(e, (MetaPubError, EutilsRequestError)):
-                raise EutilsRequestError(str(e)) from e
-            else:
-                raise EutilsRequestError(f"Request failed: {str(e)}") from e
+        pass

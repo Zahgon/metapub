@@ -17,11 +17,7 @@ CACHE_FILENAME = 'dx_doi-cache.db'
 DX_DOI_CACHE = None
 
 def _get_dx_doi_cache(cachedir=DEFAULT_CACHE_DIR):
-    global DX_DOI_CACHE
-    if not DX_DOI_CACHE:
-        _cache_path = get_cache_path(cachedir, CACHE_FILENAME)
-        DX_DOI_CACHE = SQLiteCache(_cache_path)
-    return DX_DOI_CACHE
+    pass
 
 
 class DxDOI(Borg):

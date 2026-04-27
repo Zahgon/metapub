@@ -126,7 +126,7 @@ def deparameterize(inp, sep='+'):
     :param sep: (str) default: '+'
     :return: "deparameterized" string
     """
-    return inp.replace(sep, ' ')
+    pass
 
 
 def remove_html_markup(inp):

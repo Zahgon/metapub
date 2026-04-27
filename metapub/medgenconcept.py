@@ -39,72 +39,41 @@ class MedGenConcept(MetaPubObject):
 
     def to_dict(self):
         """ returns a dictionary composed of all extractable properties of this concept. """
-        return {'CUI': self.CUI, 'title': self.title, 'definition': self.definition,
-                'semantic_id': self.semantic_id, 'semantic_type': self.semantic_type,
-                'modes_of_inheritance': self.modes_of_inheritance,
-                'associated_genes': self.associated_genes, 'medgen_uid': self.medgen_uid,
-                'names': self.names, 'OMIM': self.OMIM, 'cytogenic': self.cytogenic,
-                'chromosome': self.chromosome}
+        pass
 
     @property
     def synonyms(self):
         """Returns a list of the 'name' values from self.names."""
-        return [named['name'] for named in self.names]
+        pass
 
     @property
     def medgen_uid(self):
         """Synonym for "uid". Sometimes when juggling concepts from multiple places, this helps."""
-        return self.uid
+        pass
 
     def _get_CUI(self):
-        return self._get('ConceptId')
+        pass
     
     def _get_title(self):
-        return self._get('Title')
+        pass
         
     def _get_definition(self):
-        return self._get('Definition')
+        pass
     
     def _get_semantic_id(self):
-        return self._get('SemanticId')
+        pass
     
     def _get_semantic_type(self):
-        return self._get('SemanticType')
+        pass
         
     def _get_medgen_uid(self):
-        return self.content.get('uid')
+        pass
     
     def _get_modes_of_inheritance(self):
         """ returns a list of all known ModesOfInheritance, in format:
         [ { 'CUI': 'CNxxxx', 'name': 'some name', 'medgen_uid': 'xxxxxx', 'tui': 'A000 }, ...  ]
         """
-        output_list = []
-        modes = self.meta.find('ModesOfInheritance').getchildren()
-        
-        extra_key_dict = {'CUI': None,
-                          'TUI': None,
-                          'medgen_uid': None,
-                          }
-        for mode in modes:
-            mode_dict = extra_key_dict.copy()
-            try:
-                mode_dict['semantic_type'] = mode.find('SemanticType').text
-            except AttributeError:
-                pass
-            try:
-                mode_dict['definition'] = mode.find('Definition').text
-            except AttributeError:
-                pass
-            mode_dict['name'] = mode.find('Name').text
-
-            for item in extra_key_dict.keys():
-                try:
-                    mode.get(item)
-                except AttributeError:
-                    pass
-                
-            output_list.append(mode_dict)
-        return output_list
+        pass
              
     def _get_associated_genes(self):
         """ returns a list of AssociatedGenes, in format:
@@ -112,17 +81,7 @@ class MedGenConcept(MetaPubObject):
         
         if not available, returns None. 
         """
-        genes = []
-        try:
-            for gene in self.meta.find('AssociatedGenes').getchildren():
-                genes.append({'gene_id': gene.get('gene_id'),
-                              'hgnc': gene.text,
-                              'chromosome': gene.get('chromosome'),
-                              'cytogen_loc': gene.get('cytogen_loc')
-                              })
-            return genes
-        except AttributeError:
-            return None
+        pass
 
     def _get_names(self):
         """ Returns a list of this concept's equivalent Names in various dictionaries,
@@ -131,50 +90,23 @@ class MedGenConcept(MetaPubObject):
         {'SDUI': '300555', 'SCUI': 'xxx', 'CODE': '300555', 'SAB': 'OMIM' 'TTY': 'PT',
          'type': 'syn', 'name': 'DENT DISEASE 2'}
         """
-        names = []
-
-        # not every ID is present in each Name (e.g. SCUI only appears sometimes).        
-        possible_keys = ['SDUI', 'SCUI', 'CODE', 'SAB', 'TTY', 'PT', 'type']
-        
-        for name in self.meta.find('Names').getchildren():
-            outd = {'name': name.text}
-            for key in possible_keys:
-                try:
-                    outd[key] = name.get(key)            
-                except AttributeError:
-                    pass
-            names.append(outd)
-        return names
+        pass
 
     def _get_OMIM(self):
         """ Returns this concept's OMIM ids (list of strings), when available, else returns []. """
-        #       <OMIM><MIM>600376</MIM></OMIM>
-        omim_root = self.meta.find('OMIM')
-        out = []
-        for item in omim_root:
-            out.append(item.text)
-        return out
+        pass
         
     def _get_chromosome(self):
         """returns this concept's affected chromosome, if applicable/available"""
-        try:
-            return self.meta.find('Chromosome').text
-        except AttributeError:
-            return None
+        pass
 
     def _get_cytogenic(self):
         """returns this concept's cytogenic property, if applicable/available"""
-        try:
-            return self.meta.find('Cytogenic').text
-        except AttributeError:
-            return None
+        pass
 
     def _get_definitions(self):
         """returns this concept's definitions as LIST of strings."""
-        out = []
-        for item in self.meta.find('Definitions'):
-            out.append(item.text)
-        return out
+        pass
 
     # TODO
     # ClinicalFeatures / ClinicalFeature

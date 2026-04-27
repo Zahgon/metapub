@@ -63,14 +63,7 @@ def _start_engines():
         pm_fetch = PubMedFetcher()
 
 def _get_findit_cache(cachedir):
-    global FINDIT_CACHE
-    # allow swap of cache directory without restarting process.
-    # this is mostly for testing but also a few limited use cases.
-    if not FINDIT_CACHE:
-        _cache_path = get_cache_path(cachedir, CACHE_FILENAME)
-        FINDIT_CACHE = SQLiteCache(_cache_path)
-        log.info('FindIt Cache initialized at %s', _cache_path)
-    return FINDIT_CACHE
+    pass
 
 
 class FindIt(object):
@@ -223,9 +216,7 @@ class FindIt(object):
         Note:
             If a ConnectionError occurs during lookup, returns (None, "TXERROR: <details>").
         """
-        return find_article_from_pma(self.pma, use_nih=self.use_nih, verify=verify, 
-                                   cachedir=self._cachedir, request_timeout=self.request_timeout,
-                                   max_redirects=self.max_redirects)
+        pass
 
     def load_from_cache(self, verify=True, retry_errors=False):
         """Load article URL from cache, with fallback to fresh lookup.
@@ -250,41 +241,7 @@ class FindIt(object):
         Note:
             Connection errors are not cached to avoid persisting temporary network issues.
         """
-        # Always retry NOFORMAT results since new journal support gets added frequently
-        retry_reasons = ['NOFORMAT']
-        # Optionally retry other error types when requested
-        if retry_errors:
-            retry_reasons.extend(['PAYWALL', 'TODO', 'CANTDO', 'TXERROR'])
-
-        cache_result = self._query_cache(self.pmid)
-
-        if cache_result:
-            url = cache_result['url']
-            reason = cache_result.get('reason', '') or ''  # Handle None
-            verified = cache_result.get('verify', False)
-
-            # Extract the error code (part before ':' if present)
-            reason_code = reason.split(':')[0] if reason else ''
-
-            # Decision logic in ranked order
-            # 1. Always retry certain errors.
-            # 2. Cache result is unverified && we're still not verifying.
-            # 3. Cache result is verified && no error retries called for.
-
-            must_retry = reason_code in retry_reasons
-
-            if not must_retry and (verified or not verify):
-                return (url, reason)
-
-
-        # === RETRY === #
-        # we're here for one of the following reasons:
-        # 1) no cache result for this query
-        # 2) previous result was unverified and now verify=True
-        # 3) previous result had a "reason" in retry_reasons
-        url, reason = self.load(verify=verify)
-        self._store_cache(self.pmid, url=url, reason=reason, verify=verify)
-        return (url, reason)
+        pass
 
     def _load_pma_from_pmid(self):
         """ Loads self.pma if self.pmid is present.
@@ -293,28 +250,7 @@ class FindIt(object):
             self.doi (using crossref to look this information up if necessary)
             self.doi_score (100 if doi found in self.pma, else crossref score)
         """
-
-        self.pma = pm_fetch.article_by_pmid(self.pmid)
-
-        if self.pma.doi:
-            self.doi = self.pma.doi
-            self.doi_score = 100
-            return
-
-        # if desired, try to learn the DOI using CrossRef
-        if self.pma.doi == None:
-            if self.use_crossref:
-                self._log.debug('Using CrossRef to find DOI for PMID %s', self.pmid)
-                work = self.crfetch.article_by_pma(self.pma)
-                if work:
-                    self.doi = work.doi
-                    self.doi_score = work.score
-                    self._log.debug('\tFound DOI ', self.doi, ' with score ', self.doi_score)
-                else:
-                    self._log.debug('\tCrossRef DOI lookup failed for PMID %s.', self.pmid)
-                    self.reason = 'MISSING: doi (CrossRef lookup failed)'
-            else:
-                self.reason = 'MISSING: doi (CrossRef lookups disabled)'
+        pass
 
     def _load_pma_from_doi(self):
         """ Loads self.pma if self.doi is present.
@@ -324,21 +260,11 @@ class FindIt(object):
             self.pma  (if pmid was found)
             self.doi_score (10.0 if doi found in self.pma, else crossref score)
         """
-        self.pmid = doi2pmid(self.doi)
-        if self.pmid:
-            self.pma = pm_fetch.article_by_pmid(self.pmid)
-            self.doi_score = 100
-        else:
-            raise MetaPubError('Could not get a pmid for doi %s' % self.doi)
+        pass
 
     def to_dict(self):
         """ Returns a dictionary containing the public attributes of this object"""
-        return {'pmid': self.pmid,
-                'doi': self.doi,
-                'reason': self.reason,
-                'url': self.url,
-                'doi_score': self.doi_score,
-                }
+        pass
 
     def _make_cache_key(self, pmid):
         """ Returns normalized key (pmid as integer) for hash lookup / store. """
@@ -352,9 +278,7 @@ class FindIt(object):
         There is no return from this function. Exceptions from the SQLiteCache
         object may be raised.
         """
-        cache_value = kwargs.copy()
-        cache_value['timestamp'] = time.time()
-        self._cache[self._make_cache_key(cache_key)] = cache_value
+        pass
 
     def _query_cache(self, pmid, expiry_date=None):
         """ Return results of a lookup from the cache, if available.

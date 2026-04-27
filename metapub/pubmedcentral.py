@@ -63,8 +63,7 @@ def get_pmcid_for_otherid(otherid):
     :return pmcid: (str)
     :rtype: str
     """
-    record = _pmc_id_conversion_api(otherid)
-    return record.get('pmcid')
+    pass
 
 def get_doi_for_otherid(otherid):
     """ Use the PMC ID conversion API to attempt to convert either PMID or PMCID to a DOI.
@@ -78,8 +77,7 @@ def get_doi_for_otherid(otherid):
     :return doi: (str)
     :rtype: str
     """
-    record = _pmc_id_conversion_api(otherid)
-    return record.get('doi')
+    pass
 
 
 # PMID: https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?tool=my_tool&email=my_email@example.com&ids=23193287

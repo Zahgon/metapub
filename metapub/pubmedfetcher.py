@@ -32,29 +32,7 @@ def get_uids_from_esearch_result(xmlstr):
     Raises:
         NCBIServiceError: If XML parsing fails due to NCBI service issues.
     """
-    try:
-        # Handle XML with encoding declarations properly
-        if xmlstr.strip().startswith('<?xml'):
-            dom = etree.fromstring(xmlstr.encode('utf-8'))
-        else:
-            dom = etree.fromstring(xmlstr)
-        uids = []
-        idlist = dom.find('IdList')
-        if idlist is not None:
-            for item in idlist.findall('Id'):
-                uids.append(item.text.strip())
-        return uids
-    except Exception as e:
-        # Handle XML parsing errors that might indicate service issues
-        diagnosis = diagnose_ncbi_error(e)
-        if diagnosis['is_service_issue']:
-            raise NCBIServiceError(
-                f"Error parsing search results: {diagnosis['user_message']}", 
-                diagnosis['error_type'], 
-                diagnosis['suggested_actions']
-            ) from e
-        else:
-            raise
+    pass
 
 def parse_related_pmids_result(xmlstr):
     """Parse XML results from ELink query for related PMIDs.
@@ -158,73 +136,15 @@ class PubMedFetcher(Borg):
             raise NotImplementedError('Planned future options: "mysql", "cache-only"')
 
     def _eutils_article_by_pmid(self, pmid):
-        pmid = str(pmid)
-        try:
-            result = self.qs.efetch({'db': 'pubmed', 'id': pmid})
-        except EutilsRequestError as e:
-            # Try to provide better error diagnosis
-            diagnosis = diagnose_ncbi_error(e, 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi')
-            if diagnosis['is_service_issue']:
-                raise NCBIServiceError(
-                    diagnosis['user_message'], 
-                    diagnosis['error_type'], 
-                    diagnosis['suggested_actions']
-                ) from e
-            else:
-                raise MetaPubError('Invalid ID "%s" (rejected by Eutils); please check the number and try again.' % pmid) from e
-        except Exception as e:
-            # Handle other potential errors (XML parsing, network issues, etc.)
-            diagnosis = diagnose_ncbi_error(e, 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi')
-            if diagnosis['is_service_issue']:
-                raise NCBIServiceError(
-                    f"Unable to fetch PMID {pmid}: {diagnosis['user_message']}", 
-                    diagnosis['error_type'], 
-                    diagnosis['suggested_actions']
-                ) from e
-            else:
-                raise
-
-        if result is None:
-            return None
-
-        try:
-            pma = PubMedArticle(result)
-            if pma.pmid is None:
-                raise InvalidPMID('Pubmed ID "%s" not found' % pmid)
-            return pma
-        except InvalidPMID:
-            # Let InvalidPMID bubble up naturally - don't convert to service error
-            raise
-        except (etree.XMLSyntaxError, etree.XMLParserError) as e:
-            # Handle XML parsing errors that might indicate service issues
-            diagnosis = diagnose_ncbi_error(e)
-            if diagnosis['is_service_issue']:
-                raise NCBIServiceError(
-                    f"Error processing PMID {pmid}: {diagnosis['user_message']}", 
-                    diagnosis['error_type'], 
-                    diagnosis['suggested_actions']
-                ) from e
-            else:
-                raise
+        pass
 
     def _eutils_article_by_pmcid(self, pmcid):
         # if user submitted a bare number, prepend "PMC" to make sure it is submitted correctly
         # the conversion API at pubmedcentral.
-        pmcid = str(pmcid)
-        # if this was a flat number (use re_pmid to cheat this), try prepending "PMC" to it.
-        if re_pmid.findall(pmcid)[0] == pmcid:
-            pmcid = 'PMC'+pmcid
-
-        pmid = get_pmid_for_otherid(pmcid)
-        if pmid is None:
-            raise MetaPubError('No PMID available for PubMedCentral id %s' % pmcid)
-        return self._eutils_article_by_pmid(pmid)
+        pass
 
     def _eutils_article_by_doi(self, doi):
-        pmid = get_pmid_for_otherid(doi)
-        if pmid is None:
-            raise MetaPubError('No PMID available for doi %s' % doi)
-        return self._eutils_article_by_pmid(pmid)
+        pass
 
     def _eutils_pmids_for_query(self, query='', since=None, until=None, retstart=0, retmax=250,
                 pmc_only=False, **kwargs):
@@ -252,139 +172,7 @@ class PubMedFetcher(Borg):
         :param: retmax (int) default 250
         :param: pmc_only (bool) default False  # constructs query to only search Pubmed Central.
         '''
-
-        # lowercase all the things.
-        kwargs = lowercase_keys(kwargs)
-
-        q = {}
-
-        query = query.strip()
-        # if we find brackets in the query string, assume they are query keyword tags.
-        # otherwise, submit the query string with an "ALL" keyword tag.
-        if query.find('[') == -1 and not kwargs.get('clinical_query', False):
-            # if this query is surrounded in quotation marks, consider it an "exact match"
-            # search against "ALL" fields. Otherwise, leave it untouched.
-            # Useful to keep in a list in you run into other unicode quotes being used
-            quotes = ['\"', '\'']
-            if query and query[0] in quotes:
-                # Allow for multiple quoted terms
-                matches = [x.group(1) for x in re_matching_quotes.finditer(query)]
-                for m in matches:
-                    query += ' "%s"[ALL]' % m
-
-        # Search within date range (since / until)
-        #
-        # working examples. search by creation date only works within defined ranges (not "< X" or "> Y")
-        # ("2015/3/1"[Date - Create] : "2015/3/3"[Date - Create])
-        # ("2015/2/14"[CRDT] : "2015/3/14"[CRDT])
-        created_date_template = '"%s"[CRDT]'
-        date_range_template = " (%s : %s)"
-        if since:
-            start = created_date_template % since
-            if until:
-                end = created_date_template % until
-            else:
-                end = '"3000"[CRDT]'
-
-            query += date_range_template % (start, end)
-
-        # unique ID referents.
-        q['PMID'] = kpick(kwargs, options=['pmid', 'uid', 'pubmed_id'])
-        q['AID'] = kpick(kwargs, options=['aid', 'doi'])
-        q['book'] = kwargs.get('book', None)
-        q['JID'] = kpick(kwargs, options=['jid', 'nlm uid', 'nlm unique id'])
-        q['ISBN'] = kwargs.get('ISBN', None)
-        q['RN'] = kpick(kwargs, options=['rn', 'rcn', 'ecn'])
-        q['GR'] = kpick(kwargs, options=['gr', 'grant number'])
-
-        # Pubmed Date features:
-        q['DA'] = kpick(kwargs, options=['da', 'date created'])
-        q['LR'] = kpick(kwargs, options=['lr', 'date revised', 'date last revised'])
-        q['EDAT'] = kpick(kwargs, options=['edat', 'entrez date'])
-
-        # Journal name:
-        q['TA'] = kpick(kwargs, options=['ta', 'journal', 'jtitle', 'journal_title'])
-
-        # Article-level characteristics (title, authors, etc):
-        q['TIAB'] = kpick(kwargs, options=['tiab', 'abstract', 'title/abstract'])
-        q['TI'] = kpick(kwargs, options=['ti', 'title', 'atitle', 'article_title'])
-        q['TT'] = kpick(kwargs, options=['tt', 'transliterated title'])
-
-        q['AU'] = kpick(kwargs, options=['au', 'author'])
-        q['1AU'] = kpick(kwargs, options=['1au', 'aulast', 'author1_lastfm', 'author1_last_fm'])
-        q['FAU'] = kpick(kwargs, options=['fau', 'first_author', 'author1'])
-        q['LASTAU'] = kpick(kwargs, options=['lastau', 'last author'])
-        q['CN'] = kpick(kwargs, options=['cn', 'corporate author'])
-        q['FIR'] = kpick(kwargs, options=['fir', 'full investigator name'])
-        q['IR'] = kpick(kwargs, options=['ir', 'investigator'])
-        q['PG'] = kpick(kwargs, options=['pg', 'pages', 'spage', 'first_page'])
-
-        # Volume / Issue characteristics
-        q['IP'] = kpick(kwargs, options=['ip', 'issue'])
-        q['VTI'] = kpick(kwargs, options=['vta', 'volume title'])
-        q['VI'] = kpick(kwargs, options=['vi', 'volume', 'vol'])
-
-        # Content characteristics
-        q['LA'] = kpick(kwargs, options=['la', 'language'])
-        q['TW'] = kpick(kwargs, options=['tw', 'text'])
-        q['PS'] = kpick(kwargs, options=['ps', 'personal name as subject'])
-        q['PA'] = kpick(kwargs, options=['pa', 'pharmacological action'])
-        q['SB'] = kpick(kwargs, options=['sb', 'subset'])
-        q['NM'] = kpick(kwargs, options=['nm', 'supplementary concept'])
-
-        # MeSH characteristics
-        q['MHDA'] = kpick(kwargs, options=['mhda', 'mesh date'])
-        q['MH'] = kpick(kwargs, options=['mh', 'mesh', 'mesh terms'])
-        q['MAJR'] = kpick(kwargs, options=['majr', 'mesh major topic', 'mesh major'])
-        q['SH'] = kpick(kwargs, options=['sh', 'mesh subheadings'])
-
-        # Publication characteristics
-        q['DCOM'] = kpick(kwargs, options=['dcom', 'completion date'])
-        q['DP'] = kpick(kwargs, options=['dp', 'date of publication', 'year', 'pdat']) #most aligned w/ PubMedArticle.year and CrossRef 'year'
-        q['LID'] = kpick(kwargs, options=['lid', 'location id', 'location identifier'])
-        q['PUBN'] = kpick(kwargs, options=['pubn', 'publisher'])
-        q['PT'] = kpick(kwargs, options=['pt', 'pubmed_type', 'publication type'])
-        q['PL'] = kpick(kwargs, options=['pl', 'place of publication'])
-
-        # Miscellaneous, alphabetized by Medline feature tag.
-        q['AD'] = kpick(kwargs, options=['ad', 'affiliation'])
-        q['OT'] = kpick(kwargs, options=['ot', 'other term'])
-        q['NM'] = kpick(kwargs, options=['nm', 'substance name'])
-        q['SI'] = kpick(kwargs, options=['si', 'secondary source id'])
-
-        for feature in q.keys():
-            if q[feature] != None:
-                query += ' "%s"[%s]' % (q[feature], feature)
-
-        # option to query pubmed central only:
-        # pubmed pmc[sb]
-        if pmc_only:
-            query += ' "pubmed pmc"[sb]'
-
-        log.debug('pmids_for_query: querying %s', query)
-
-        try:
-            result = self.qs.esearch(
-                {
-                    "db": "pubmed",
-                    "term": query,
-                    "retmax": retmax,
-                    "retstart": retstart,
-                    "sort": "relevance",
-                }
-            )
-            return get_uids_from_esearch_result(result)
-        except Exception as e:
-            # Handle search errors with intelligent diagnosis
-            diagnosis = diagnose_ncbi_error(e, 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi')
-            if diagnosis['is_service_issue']:
-                raise NCBIServiceError(
-                    f"Unable to search PubMed: {diagnosis['user_message']}", 
-                    diagnosis['error_type'], 
-                    diagnosis['suggested_actions']
-                ) from e
-            else:
-                raise
+        pass
 
     def pmids_for_clinical_query(self, query, category, optimization='broad',
             since=None, until=None, retstart=0, retmax=250, pmc_only=False, **kwargs):
@@ -410,15 +198,7 @@ class PubMedFetcher(Borg):
         :param: optimization (string) [default: broad]
         :return: list of pubmed IDs
         '''
-
-        key = '%s_%s' % (category, optimization)
-        if query:
-            query += ' '+ clinical_query_map[key]
-        else:
-            raise MetaPubError('Query string required for Clinical Query.')
-
-        kwargs['clinical_query'] = True
-        return self.pmids_for_query(query, retstart=retstart, retmax=retmax, since=since, until=until, **kwargs)
+        pass
 
     def pmids_for_medical_genetics_query(self, query, category='all', since=None, until=None,
                     retstart=0, retmax=250, pmc_only=False, **kwargs):
@@ -441,13 +221,7 @@ class PubMedFetcher(Borg):
         :param: category (string) [default: all]
         :return: list of pubmed IDs
         '''
-        if query:
-            query += ' '+ medical_genetics_query_map[category]
-        else:
-            raise MetaPubError('Query string required for Medical Genetics query.')
-
-        kwargs['clinical_query'] = True
-        return self.pmids_for_query(query, retstart=retstart, retmax=retmax, since=since, until=until, **kwargs)
+        pass
 
     def pmids_for_citation(self, **kwargs):
         '''returns list of pmids for given citation. requires at least 3/5 of these keyword arguments:
@@ -511,22 +285,7 @@ class PubMedFetcher(Borg):
         
         :raises: NCBIServiceError if NCBI ELink service is down
         '''
-        try:
-            outd = { }
-            xmlstr = self.qs.elink( { 'dbfrom': 'pubmed', 'id': pmid, 'cmd': 'neighbor' } )
-            outd = parse_related_pmids_result(xmlstr)
-            return outd
-        except Exception as e:
-            # Handle ELink errors with intelligent diagnosis
-            diagnosis = diagnose_ncbi_error(e, 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi')
-            if diagnosis['is_service_issue']:
-                raise NCBIServiceError(
-                    f"Unable to fetch related articles for PMID {pmid}: {diagnosis['user_message']}", 
-                    diagnosis['error_type'], 
-                    diagnosis['suggested_actions']
-                ) from e
-            else:
-                raise
+        pass
 
     def pmid_for_bookID(self, book_id):
         '''For supplied NCBI Book ID, use the pubmed advanced query API to find its PMID.

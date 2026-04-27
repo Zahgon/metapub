@@ -177,8 +177,5 @@ def find_article_from_doi(doi, verify=True, use_nih=False, cachedir=None,
     :param max_redirects: (int) maximum redirects to follow, default: 3
     :return: (url, reason)
     """
-    fetch = PubMedFetcher()
-    pma = fetch.article_by_pmid(doi2pmid(doi))
-    return find_article_from_pma(pma, verify=verify, use_nih=use_nih, cachedir=cachedir,
-                               request_timeout=request_timeout, max_redirects=max_redirects)
+    pass
 

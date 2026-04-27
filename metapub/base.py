@@ -67,33 +67,18 @@ class MetaPubObject(object):
         Returns:
             lxml document object.
         '''
-        if isinstance(xml, str) or isinstance(xml, bytes):
-            dom = etree.XML(xml)
-        else:
-            dom = etree.XML(xml)
-
-        if root:
-            return dom.find(root)
-        else:
-            return dom
+        pass
 
     def _get(self, tag):
         '''Returns content of named XML element, or None if not found.'''
-        elem = self.content.find(tag)
-        return self._extract_text(elem)
+        pass
 
     def _clean_html(self, elem):
         '''Removes HTML elements like i, b, and a'''
-        cleaner = Cleaner(remove_tags = ['a', 'i', 'b', 'em', 'sup'])
-        return cleaner.clean_html(etree.tostring(elem).decode("utf-8"))\
-            .replace("<div>", "").replace("</div>", "").strip() 
+        pass
     
     def _extract_text(self, elem):
-        if elem is None:
-            return None
-        if len(elem.getchildren()):
-            return self._clean_html(elem)
-        return elem.text
+        pass
 
 
 # singleton class used by the fetchers.

@@ -35,8 +35,7 @@ class PublisherHandler:
         Returns:
             True if this handler can process the journal
         """
-        # This will be overridden by registry lookup
-        return False
+        pass
 
     def get_pdf_url(self, pma, verify: bool = True, request_timeout: int = 10, 
                    max_redirects: int = 3) -> Tuple[Optional[str], Optional[str]]:

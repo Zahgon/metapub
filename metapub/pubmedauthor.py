@@ -32,41 +32,10 @@ class PubMedAuthor(MetaPubObject):
         self._parse_xml()
 
     def to_dict(self):
-        outd = self.__dict__.copy()
-        outd.pop('content')
-        return outd
+        pass
 
     def _parse_xml(self):
-        if self.content is None:
-            return
-
-        try:
-            self.last_name = self.content.find('LastName').text
-        except AttributeError:
-            pass
-
-        try:
-            self.fore_name = self.content.find('ForeName').text
-        except AttributeError:
-            pass
-
-        try:
-            self.initials = self.content.find('Initials').text
-        except AttributeError:
-            pass
-
-        try:
-            self.collective_name = self.content.find('CollectiveName').text
-        except AttributeError:
-            pass
-
-        try:
-            self.affiliations = [aff.text for aff in self.content.find('AffiliationInfo').findall('Affiliation')]
-        except AttributeError:
-            pass
-
-        if self.last_name is None and self.fore_name is None and self.initials is None and self.collective_name is None and self.affiliations == []:
-            raise MetaPubError('Author structure not recognized')
+        pass
 
     def __str__(self):
         if self.last_name and self.initials:

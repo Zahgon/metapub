@@ -87,20 +87,7 @@ class ClinVarFetcher(Borg):
         :return: dictionary
         :raises: NCBIServiceError if ClinVar service is down
         """
-        try:
-            result = self.qs.esummary({'db': 'clinvar', 'id': accession_id, 'retmode': 'json'})
-            return result
-        except Exception as e:
-            # Handle ClinVar accession lookup errors
-            diagnosis = diagnose_ncbi_error(e, 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi')
-            if diagnosis['is_service_issue']:
-                raise NCBIServiceError(
-                    f"Unable to fetch ClinVar accession '{accession_id}': {diagnosis['user_message']}", 
-                    diagnosis['error_type'], 
-                    diagnosis['suggested_actions']
-                ) from e
-            else:
-                raise
+        pass
 
     def _eutils_get_variant_summary(self, accession_id, id_from: IdLocations = 'entrez'):
         """ returns structured, flattened summary for a ClinVar variant given an accession ID.
@@ -114,15 +101,7 @@ class ClinVarFetcher(Borg):
         :return: ClinVarVariant
         :raises: MetaPubError if variation ID is invalid (empty XML document response)
         """
-        qs_args = {'db': 'clinvar', 'id': accession_id, 'rettype': 'vcv'}
-        if id_from == 'clinvar':
-            qs_args['is_variationid'] = 'true'
-        result = self.qs.efetch(qs_args)
-        try:
-            return ClinVarVariant(result)
-        except BaseXMLError as _:
-            # empty XML document == invalid variant ID
-            raise MetaPubError('Invalid ClinVar Variation ID')
+        pass
 
     def _eutils_ids_by_gene(self, gene, single_gene=False):
         """
@@ -132,23 +111,7 @@ class ClinVarFetcher(Borg):
         :param: single_gene (bool) [default: False] - restrict results to single-gene accessions.
         :return: list of clinvar ids (strings)
         """
-        # equivalent esearch:
-        # https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=FGFR3[gene]&retmax=500
-
-        result = self.qs.esearch(
-            {
-                "db": "clinvar",
-                "term": gene + "[gene]",
-                "single_gene": single_gene,
-                "sort": "relevance",
-            }
-        )
-        dom = etree.fromstring(result)
-        ids = []
-        idlist = dom.find('IdList')
-        for item in idlist.findall('Id'):
-            ids.append(item.text.strip())
-        return ids
+        pass
 
     def _eutils_pmids_for_id(self, clinvar_id):
         """
@@ -158,8 +121,7 @@ class ClinVarFetcher(Borg):
         :param: clinvar_id (integer or string)
         :return: list of pubmed IDs (strings)
         """
-        xmlstr = self.qs.elink({'dbfrom': 'clinvar', 'id': clinvar_id, 'db': 'pubmed'})
-        return parse_elink_response(xmlstr)
+        pass
 
     def _eutils_ids_for_variant(self, hgvs_c):
         """ returns ClinVar IDs for given HGVS c. string
@@ -167,15 +129,7 @@ class ClinVarFetcher(Borg):
         :param: hgvs_c (string)
         :return: list of pubmed IDs (strings)
         """
-        result = self.qs.esearch(
-            {"db": "clinvar", "term": '"%s"' % hgvs_c, "sort": "relevance"}
-        )
-        dom = etree.fromstring(result)
-        ids = []
-        idlist = dom.find('IdList')
-        for item in idlist.findall('Id'):
-            ids.append(item.text.strip())
-        return ids
+        pass
 
     def _eutils_pmids_for_hgvs(self, hgvs_text):
         """ returns pubmed IDs for given HGVS c. string
@@ -183,10 +137,4 @@ class ClinVarFetcher(Borg):
         :param hgvs_text:
         :return: list of pubmed IDs
         """
-        ids = self._eutils_ids_for_variant(hgvs_text)
-        if len(ids) > 1:
-            print('Warning: more than one ClinVar id returned for term %s' % hgvs_text)
-        pmids = set()
-        for clinvar_id in ids:
-            pmids.update(self._eutils_pmids_for_id(clinvar_id))
-        return list(pmids)
+        pass
